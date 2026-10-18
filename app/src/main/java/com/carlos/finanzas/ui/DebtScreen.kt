@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -114,10 +115,14 @@ private fun DebtList(debts: List<DebtEntity>, onOpen: (DebtEntity) -> Unit, onAd
     ) {
         item { Text("Deudas", style = MaterialTheme.typography.headlineSmall) }
         item {
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Debo en total: ${formatMoney(owe)}", style = MaterialTheme.typography.titleMedium)
-                    Text("Me deben: ${formatMoney(owed)}")
+            Card(
+                Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Debo en total", style = MaterialTheme.typography.bodyMedium)
+                    Text(formatMoney(owe), style = MaterialTheme.typography.displaySmall)
+                    Text("Me deben ${formatMoney(owed)}", style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }

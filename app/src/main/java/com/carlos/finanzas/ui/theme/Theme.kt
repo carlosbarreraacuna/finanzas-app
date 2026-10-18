@@ -76,6 +76,7 @@ private fun style(size: Int, weight: FontWeight, line: Int, tracking: Double = 0
 )
 
 private val Type = Typography(
+    displaySmall = style(38, FontWeight.Bold, 44, -0.8),
     headlineSmall = style(26, FontWeight.Bold, 32, -0.4),
     titleMedium = style(18, FontWeight.SemiBold, 24),
     titleSmall = style(15, FontWeight.SemiBold, 20),
