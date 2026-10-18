@@ -13,7 +13,7 @@ class BudgetCalculatorTest {
         LocalDate.of(y, m, d).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
     @Test
-    fun `hoy antes del dia de pago: el periodo empieza el pago del mes anterior`() {
+    fun `hoy antes del dia de pago el periodo empieza en el pago del mes anterior`() {
         val p = BudgetCalculator.periodFor(LocalDate.of(2026, 10, 18), 30)
         assertEquals(LocalDate.of(2026, 9, 30), p.start)
         assertEquals(LocalDate.of(2026, 10, 30), p.endExclusive)
