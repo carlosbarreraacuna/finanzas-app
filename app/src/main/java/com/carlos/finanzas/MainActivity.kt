@@ -11,7 +11,6 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -34,6 +33,7 @@ import com.carlos.finanzas.ui.MoreScreen
 import com.carlos.finanzas.ui.SettingsViewModel
 import com.carlos.finanzas.ui.TransactionsScreen
 import com.carlos.finanzas.ui.TransactionsViewModel
+import com.carlos.finanzas.ui.theme.FinanzasTheme
 
 class MainActivity : ComponentActivity() {
     private val healthViewModel: HealthViewModel by viewModels()
@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
             val tabs = listOf("Movimientos", "Presupuesto", "Deudas", "Sin reconocer", "Más")
             var tab by remember { mutableIntStateOf(0) }
 
-            MaterialTheme {
+            FinanzasTheme {
                 Surface(Modifier.fillMaxSize()) {
                     Scaffold(
                         bottomBar = {
