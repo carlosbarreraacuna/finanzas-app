@@ -5,8 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlos.finanzas.FinanzasApp
 import com.carlos.finanzas.capture.CaptureProcessor
+import com.carlos.finanzas.capture.MerchantNormalizer
 import com.carlos.finanzas.capture.MessageParser
 import com.carlos.finanzas.capture.TemplateBuilder
+import com.carlos.finanzas.data.CategoryRuleEntity
 import com.carlos.finanzas.data.TemplateEntity
 import com.carlos.finanzas.data.TransactionEntity
 import com.carlos.finanzas.data.UnrecognizedMessageEntity
@@ -23,6 +25,29 @@ class TransactionsViewModel(app: Application) : AndroidViewModel(app) {
     val transactions: StateFlow<List<TransactionEntity>> =
         db.transactions().recent(200)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * Asigna la categoría a una transacción. Con [applyToMerchant] además crea (o actualiza) la regla
+     * del comercio y recategoriza todas las transacciones existentes del mismo comercio.
+     */
+    fun setCategory(tx: TransactionEntity, category: String, applyToMerchant: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val key = MerchantNormalizer.key(tx.merchant)
+            val learn = applyToMerchant && MerchantNormalizer.isLearnable(key)
+            val ids = if (learn) {
+                db.transactions().all().filter { MerchantNormalizer.key(it.merchant) == key }.map { it.id }
+            } else {
+                listOf(tx.id)
+            }
+            // SQLite limita las variables por consulta: se actualiza por lotes.
+            ids.chunked(500).forEach { db.transactions().setCategoryForIds(it, category) }
+            if (learn) {
+                db.categoryRules().upsert(
+                    CategoryRuleEntity(merchantKey = key, category = category, createdAt = System.currentTimeMillis())
+                )
+            }
+        }
+    }
 }
 
 class InboxViewModel(app: Application) : AndroidViewModel(app) {

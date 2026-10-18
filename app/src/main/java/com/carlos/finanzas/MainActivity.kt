@@ -23,6 +23,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.carlos.finanzas.ui.BudgetScreen
+import com.carlos.finanzas.ui.BudgetViewModel
 import com.carlos.finanzas.ui.HealthScreen
 import com.carlos.finanzas.ui.HealthViewModel
 import com.carlos.finanzas.ui.InboxScreen
@@ -37,6 +39,7 @@ class MainActivity : ComponentActivity() {
     private val transactionsViewModel: TransactionsViewModel by viewModels()
     private val inboxViewModel: InboxViewModel by viewModels()
     private val settingsViewModel: SettingsViewModel by viewModels()
+    private val budgetViewModel: BudgetViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,7 +54,7 @@ class MainActivity : ComponentActivity() {
                 launcher.launch(perms.toTypedArray())
             }
 
-            val tabs = listOf("Movimientos", "Sin reconocer", "Salud", "Ajustes")
+            val tabs = listOf("Movimientos", "Presupuesto", "Sin reconocer", "Salud", "Ajustes")
             var tab by remember { mutableIntStateOf(0) }
 
             MaterialTheme {
@@ -73,8 +76,9 @@ class MainActivity : ComponentActivity() {
                         Column(Modifier.padding(padding)) {
                             when (tab) {
                                 0 -> TransactionsScreen(transactionsViewModel)
-                                1 -> InboxScreen(inboxViewModel)
-                                2 -> HealthScreen(healthViewModel)
+                                1 -> BudgetScreen(budgetViewModel)
+                                2 -> InboxScreen(inboxViewModel)
+                                3 -> HealthScreen(healthViewModel)
                                 else -> SettingsScreen(settingsViewModel)
                             }
                         }

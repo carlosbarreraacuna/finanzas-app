@@ -12,9 +12,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         TransactionEntity::class,
         UnrecognizedMessageEntity::class,
         HealthEventEntity::class,
-        TemplateEntity::class
+        TemplateEntity::class,
+        CategoryRuleEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -22,9 +23,12 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun unrecognized(): UnrecognizedDao
     abstract fun health(): HealthDao
     abstract fun templates(): TemplateDao
+    abstract fun categoryRules(): CategoryRuleDao
 
     companion object {
         const val FILE_NAME = "finanzas.db"
+        /** Debe coincidir con la versión del @Database; la usa BackupManager al restaurar. */
+        const val SCHEMA_VERSION = 3
 
         @Volatile private var instance: AppDatabase? = null
 
@@ -42,6 +46,22 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `category_rules` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`merchantKey` TEXT NOT NULL, " +
+                        "`category` TEXT NOT NULL, " +
+                        "`createdAt` INTEGER NOT NULL)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_category_rules_merchantKey` " +
+                        "ON `category_rules` (`merchantKey`)"
+                )
+            }
+        }
+
         fun get(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -51,7 +71,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     // IMPORTANTE: nunca usar fallbackToDestructiveMigration().
                     // Cada cambio de esquema necesita su Migration explícita.
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                     .also { instance = it }
             }

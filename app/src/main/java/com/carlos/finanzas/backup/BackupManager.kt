@@ -19,8 +19,8 @@ object BackupManager {
     const val EXTENSION = ".fnzbk"
     const val KEEP_LAST = 7
 
-    /** Versión máxima de esquema que esta app sabe abrir. */
-    private const val MAX_SCHEMA_VERSION = 2
+    /** Versión máxima de esquema que esta app sabe abrir (la de la base actual). */
+    private const val MAX_SCHEMA_VERSION = AppDatabase.SCHEMA_VERSION
 
     data class Outcome(val ok: Boolean, val message: String)
 

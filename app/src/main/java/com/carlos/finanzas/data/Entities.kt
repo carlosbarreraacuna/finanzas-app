@@ -44,6 +44,18 @@ data class TemplateEntity(
     val createdAt: Long
 )
 
+/** Regla aprendida: comercio normalizado -> categoría (se crea al corregir una categoría a mano). */
+@Entity(
+    tableName = "category_rules",
+    indices = [Index(value = ["merchantKey"], unique = true)]
+)
+data class CategoryRuleEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val merchantKey: String,
+    val category: String,
+    val createdAt: Long
+)
+
 @Entity(tableName = "health_events", indices = [Index("timestamp")])
 data class HealthEventEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

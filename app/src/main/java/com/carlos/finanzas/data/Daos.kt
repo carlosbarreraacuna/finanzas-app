@@ -13,6 +13,25 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions ORDER BY timestamp DESC LIMIT :limit")
     fun recent(limit: Int = 100): Flow<List<TransactionEntity>>
+
+    @Query("SELECT * FROM transactions")
+    suspend fun all(): List<TransactionEntity>
+
+    /** Transacciones con [from] <= timestamp < [to]. */
+    @Query("SELECT * FROM transactions WHERE timestamp >= :from AND timestamp < :to")
+    fun between(from: Long, to: Long): Flow<List<TransactionEntity>>
+
+    @Query("UPDATE transactions SET category = :category WHERE id IN (:ids)")
+    suspend fun setCategoryForIds(ids: List<Long>, category: String)
+}
+
+@Dao
+interface CategoryRuleDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(rule: CategoryRuleEntity)
+
+    @Query("SELECT * FROM category_rules WHERE merchantKey = :key LIMIT 1")
+    suspend fun findByKey(key: String): CategoryRuleEntity?
 }
 
 @Dao

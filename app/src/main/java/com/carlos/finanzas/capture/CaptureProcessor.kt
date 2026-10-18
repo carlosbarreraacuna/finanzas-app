@@ -59,11 +59,14 @@ object CaptureProcessor {
         // Ventana de 5 minutos para deduplicar SMS + notificación del mismo movimiento.
         val bucket = timestamp / (5 * 60 * 1000)
         val fingerprint = sha256("${parsed.amountCents}|${parsed.merchant.lowercase()}|$bucket")
+        val key = MerchantNormalizer.key(parsed.merchant)
+        val learned = if (MerchantNormalizer.isLearnable(key)) db.categoryRules().findByKey(key)?.category else null
         val id = db.transactions().insert(
             TransactionEntity(
                 timestamp = timestamp,
                 amountCents = parsed.amountCents,
                 merchant = parsed.merchant,
+                category = Categorizer.suggest(key, parsed.amountCents, learned),
                 source = source,
                 sender = sender,
                 rawText = text,
