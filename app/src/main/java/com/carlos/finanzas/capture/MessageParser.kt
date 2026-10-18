@@ -51,6 +51,7 @@ class MessageParser(private val templates: List<Template> = DEFAULT_TEMPLATES) {
     }
 
     companion object {
+        /** Plantillas de ejemplo, usadas solo si ninguna plantilla del usuario coincide. */
         // Plantillas de ejemplo. Ajústalas a los mensajes reales de tus bancos.
         val DEFAULT_TEMPLATES = listOf(
             Template(

@@ -8,14 +8,35 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import com.carlos.finanzas.ui.HealthScreen
 import com.carlos.finanzas.ui.HealthViewModel
+import com.carlos.finanzas.ui.InboxScreen
+import com.carlos.finanzas.ui.InboxViewModel
+import com.carlos.finanzas.ui.SettingsScreen
+import com.carlos.finanzas.ui.SettingsViewModel
+import com.carlos.finanzas.ui.TransactionsScreen
+import com.carlos.finanzas.ui.TransactionsViewModel
 
 class MainActivity : ComponentActivity() {
     private val healthViewModel: HealthViewModel by viewModels()
+    private val transactionsViewModel: TransactionsViewModel by viewModels()
+    private val inboxViewModel: InboxViewModel by viewModels()
+    private val settingsViewModel: SettingsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,8 +51,35 @@ class MainActivity : ComponentActivity() {
                 launcher.launch(perms.toTypedArray())
             }
 
+            val tabs = listOf("Movimientos", "Sin reconocer", "Salud", "Ajustes")
+            var tab by remember { mutableIntStateOf(0) }
+
             MaterialTheme {
-                Surface { HealthScreen(healthViewModel) }
+                Surface(Modifier.fillMaxSize()) {
+                    Scaffold(
+                        bottomBar = {
+                            NavigationBar {
+                                tabs.forEachIndexed { i, label ->
+                                    NavigationBarItem(
+                                        selected = tab == i,
+                                        onClick = { tab = i },
+                                        icon = {},
+                                        label = { Text(label) }
+                                    )
+                                }
+                            }
+                        }
+                    ) { padding ->
+                        Column(Modifier.padding(padding)) {
+                            when (tab) {
+                                0 -> TransactionsScreen(transactionsViewModel)
+                                1 -> InboxScreen(inboxViewModel)
+                                2 -> HealthScreen(healthViewModel)
+                                else -> SettingsScreen(settingsViewModel)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

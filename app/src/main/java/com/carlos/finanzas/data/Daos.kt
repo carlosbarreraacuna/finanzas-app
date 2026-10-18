@@ -22,6 +22,21 @@ interface UnrecognizedDao {
 
     @Query("SELECT * FROM unrecognized_messages WHERE status = 'PENDING' ORDER BY timestamp DESC")
     fun pending(): Flow<List<UnrecognizedMessageEntity>>
+
+    @Query("SELECT * FROM unrecognized_messages WHERE status = 'PENDING' AND sender = :sender")
+    suspend fun pendingBySender(sender: String): List<UnrecognizedMessageEntity>
+
+    @Query("UPDATE unrecognized_messages SET status = :status WHERE id = :id")
+    suspend fun setStatus(id: Long, status: String)
+}
+
+@Dao
+interface TemplateDao {
+    @Insert
+    suspend fun insert(template: TemplateEntity): Long
+
+    @Query("SELECT * FROM templates ORDER BY id DESC")
+    suspend fun all(): List<TemplateEntity>
 }
 
 @Dao

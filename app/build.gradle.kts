@@ -13,8 +13,8 @@ android {
         minSdk = 26
         targetSdk = 34
         // Sube versionCode en cada release para poder actualizar encima.
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
     }
 
     signingConfigs {
@@ -68,4 +68,8 @@ dependencies {
     ksp("androidx.room:room-compiler:$room")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+    implementation("androidx.documentfile:documentfile:1.0.1")
+
+    testImplementation("junit:junit:4.13.2")
 }

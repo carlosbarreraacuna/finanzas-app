@@ -56,6 +56,24 @@ fun HealthScreen(viewModel: HealthViewModel) {
                 Text("Último SMS: ${formatTime(ui.lastSms)}")
                 Text("Capturas últimas 24 h: ${ui.capturesLast24h}")
                 Text("Fallos de parseo últimas 24 h: ${ui.parseFailuresLast24h}")
+                Text("Último backup: ${formatTime(ui.lastBackup)}")
+            }
+        }
+
+        if (p.notificationAccess && !p.listenerConnected) {
+            Button(onClick = { viewModel.requestRebind() }) { Text("Reintentar enlace del listener") }
+        }
+
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Eventos recientes", style = MaterialTheme.typography.titleMedium)
+                if (ui.recentEvents.isEmpty()) Text("Sin eventos todavía")
+                ui.recentEvents.forEach { e ->
+                    Text(
+                        "${formatTime(e.timestamp)} · ${e.type}" + (e.detail?.let { " ($it)" } ?: ""),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         }
 

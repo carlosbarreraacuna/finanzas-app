@@ -32,6 +32,18 @@ data class UnrecognizedMessageEntity(
     val status: String = "PENDING" // PENDING, DISCARDED, RESOLVED
 )
 
+/** Plantilla creada por el usuario desde la bandeja "Sin reconocer". */
+@Entity(tableName = "templates")
+data class TemplateEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    /** Regex con grupos con nombre: amount (obligatorio) y merchant (opcional). */
+    val pattern: String,
+    val isIncome: Boolean,
+    val sender: String?,
+    val createdAt: Long
+)
+
 @Entity(tableName = "health_events", indices = [Index("timestamp")])
 data class HealthEventEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

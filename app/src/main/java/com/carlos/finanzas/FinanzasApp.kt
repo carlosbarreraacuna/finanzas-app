@@ -4,5 +4,6 @@ import android.app.Application
 import com.carlos.finanzas.data.AppDatabase
 
 class FinanzasApp : Application() {
-    val db: AppDatabase by lazy { AppDatabase.get(this) }
+    /** Siempre se pide a AppDatabase.get() para tolerar el cierre durante una restauración. */
+    val db: AppDatabase get() = AppDatabase.get(this)
 }

@@ -36,6 +36,9 @@ jobs:
             echo "KEY_PASSWORD=$KS_KEY_PASS" >> "$GITHUB_ENV"
           fi
 
+      - name: Pruebas unitarias
+        run: gradle :app:testDebugUnitTest --no-daemon
+
       - name: Compilar release
         run: gradle :app:assembleRelease --no-daemon
 
