@@ -18,8 +18,8 @@ interface TransactionDao {
     suspend fun all(): List<TransactionEntity>
 
     /** Transacciones con [from] <= timestamp < [to]. */
-    @Query("SELECT * FROM transactions WHERE timestamp >= :from AND timestamp < :to")
-    fun between(from: Long, to: Long): Flow<List<TransactionEntity>>
+    @Query("SELECT * FROM transactions WHERE timestamp >= :fromMs AND timestamp < :toMs")
+    fun between(fromMs: Long, toMs: Long): Flow<List<TransactionEntity>>
 
     @Query("UPDATE transactions SET category = :category WHERE id IN (:ids)")
     suspend fun setCategoryForIds(ids: List<Long>, category: String)

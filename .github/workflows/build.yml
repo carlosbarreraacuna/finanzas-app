@@ -40,7 +40,17 @@ jobs:
           fi
 
       - name: Pruebas unitarias
-        run: gradle :app:testDebugUnitTest --no-daemon
+        shell: bash
+        run: |
+          set +e
+          gradle :app:testDebugUnitTest --no-daemon --console=plain 2>&1 | tee gradle-test.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            # Resume los errores en una anotación visible sin abrir el log completo.
+            msg=$(grep -E "^e: |FAILED|AssertionError|expected:|What went wrong|Execution failed|error:" -A2 gradle-test.log | head -60 | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=Resumen de errores de Gradle::${msg}"
+          fi
+          exit $status
 
       # Un APK release sin firmar no se puede instalar ("el paquete no es válido"),
       # así que sin secrets se genera el debug, que Android sí instala.
