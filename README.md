@@ -2,13 +2,16 @@
 
 App Android personal (local-first) que captura gastos desde notificaciones y SMS bancarios, sin depender de terceros.
 
-## Estado actual (v0.3.0)
+## Estado actual (v0.4.0)
 - Room (SQLite) v3: `transactions`, `unrecognized_messages`, `health_events`, `templates`, `category_rules` (migraciones 1→2 y 2→3).
 - `FinanceNotificationListener` y `SmsReceiver` -> `CaptureProcessor` -> `MessageParser` (plantillas regex).
   Las plantillas del usuario (tabla `templates`) tienen prioridad sobre las de ejemplo.
 - Deduplicación por huella (monto + comercio + ventana de 5 min).
 - Pantallas: **Movimientos**, **Sin reconocer** (asistente para crear plantillas seleccionando el monto y el comercio
   en el mensaje, vista previa y reprocesado de pendientes del mismo remitente), **Salud del servicio**, **Ajustes**.
+- **Deudas** (v0.4.0): tarjetas, préstamos y deudas informales (yo debo / me deben), tabla de amortización con tasa EA,
+  simulador de abonos extra, comparación avalancha vs bola de nieve, descuento automático de pagos detectados por palabra clave,
+  y avisos diarios de vencimientos (3 días antes) y cupo de tarjeta alto (>=80 %). Base de datos en esquema v4. Pestaña "Más" = Salud + Ajustes.
 - Categorías: al guardar una transacción se asigna categoría con (1) la regla aprendida del comercio, (2) "Ingresos" si el monto es positivo,
   (3) palabras clave por defecto (Rappi, Uber, Netflix, etc.). Al tocar un movimiento y cambiar su categoría se crea la regla
   y se recategorizan los anteriores del mismo comercio (`MerchantNormalizer` genera la clave: "RAPPI*COL 123" -> "rappi col").

@@ -5,6 +5,7 @@ import java.text.Normalizer
 object Categories {
     const val INCOME = "Ingresos"
     const val UNCATEGORIZED = "Sin categoría"
+    const val DEBTS = "Deudas"
 
     /** Categorías que se pueden asignar a mano. */
     val ALL = listOf(

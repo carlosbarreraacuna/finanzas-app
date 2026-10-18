@@ -13,9 +13,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         UnrecognizedMessageEntity::class,
         HealthEventEntity::class,
         TemplateEntity::class,
-        CategoryRuleEntity::class
+        CategoryRuleEntity::class,
+        DebtEntity::class,
+        DebtPaymentEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -24,11 +26,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun health(): HealthDao
     abstract fun templates(): TemplateDao
     abstract fun categoryRules(): CategoryRuleDao
+    abstract fun debts(): DebtDao
+    abstract fun debtPayments(): DebtPaymentDao
 
     companion object {
         const val FILE_NAME = "finanzas.db"
         /** Debe coincidir con la versión del @Database; la usa BackupManager al restaurar. */
-        const val SCHEMA_VERSION = 3
+        const val SCHEMA_VERSION = 4
 
         @Volatile private var instance: AppDatabase? = null
 
@@ -62,6 +66,41 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `debts` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`name` TEXT NOT NULL, " +
+                        "`kind` TEXT NOT NULL, " +
+                        "`direction` TEXT NOT NULL, " +
+                        "`originalCents` INTEGER NOT NULL, " +
+                        "`balanceCents` INTEGER NOT NULL, " +
+                        "`annualRatePct` REAL NOT NULL, " +
+                        "`monthlyPaymentCents` INTEGER NOT NULL, " +
+                        "`dueDay` INTEGER NOT NULL, " +
+                        "`creditLimitCents` INTEGER NOT NULL, " +
+                        "`matchKeyword` TEXT NOT NULL, " +
+                        "`notes` TEXT NOT NULL, " +
+                        "`active` INTEGER NOT NULL, " +
+                        "`createdAt` INTEGER NOT NULL)"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `debt_payments` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`debtId` INTEGER NOT NULL, " +
+                        "`timestamp` INTEGER NOT NULL, " +
+                        "`amountCents` INTEGER NOT NULL, " +
+                        "`source` TEXT NOT NULL, " +
+                        "`transactionId` INTEGER, " +
+                        "`note` TEXT NOT NULL)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_debt_payments_debtId` ON `debt_payments` (`debtId`)"
+                )
+            }
+        }
+
         fun get(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -71,7 +110,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     // IMPORTANTE: nunca usar fallbackToDestructiveMigration().
                     // Cada cambio de esquema necesita su Migration explícita.
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
                     .also { instance = it }
             }

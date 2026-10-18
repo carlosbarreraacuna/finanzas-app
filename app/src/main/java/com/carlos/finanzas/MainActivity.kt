@@ -25,11 +25,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.carlos.finanzas.ui.BudgetScreen
 import com.carlos.finanzas.ui.BudgetViewModel
-import com.carlos.finanzas.ui.HealthScreen
+import com.carlos.finanzas.ui.DebtScreen
+import com.carlos.finanzas.ui.DebtViewModel
 import com.carlos.finanzas.ui.HealthViewModel
 import com.carlos.finanzas.ui.InboxScreen
 import com.carlos.finanzas.ui.InboxViewModel
-import com.carlos.finanzas.ui.SettingsScreen
+import com.carlos.finanzas.ui.MoreScreen
 import com.carlos.finanzas.ui.SettingsViewModel
 import com.carlos.finanzas.ui.TransactionsScreen
 import com.carlos.finanzas.ui.TransactionsViewModel
@@ -40,6 +41,7 @@ class MainActivity : ComponentActivity() {
     private val inboxViewModel: InboxViewModel by viewModels()
     private val settingsViewModel: SettingsViewModel by viewModels()
     private val budgetViewModel: BudgetViewModel by viewModels()
+    private val debtViewModel: DebtViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +56,7 @@ class MainActivity : ComponentActivity() {
                 launcher.launch(perms.toTypedArray())
             }
 
-            val tabs = listOf("Movimientos", "Presupuesto", "Sin reconocer", "Salud", "Ajustes")
+            val tabs = listOf("Movimientos", "Presupuesto", "Deudas", "Sin reconocer", "Más")
             var tab by remember { mutableIntStateOf(0) }
 
             MaterialTheme {
@@ -77,9 +79,9 @@ class MainActivity : ComponentActivity() {
                             when (tab) {
                                 0 -> TransactionsScreen(transactionsViewModel)
                                 1 -> BudgetScreen(budgetViewModel)
-                                2 -> InboxScreen(inboxViewModel)
-                                3 -> HealthScreen(healthViewModel)
-                                else -> SettingsScreen(settingsViewModel)
+                                2 -> DebtScreen(debtViewModel)
+                                3 -> InboxScreen(inboxViewModel)
+                                else -> MoreScreen(healthViewModel, settingsViewModel)
                             }
                         }
                     }

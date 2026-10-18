@@ -56,6 +56,46 @@ data class CategoryRuleEntity(
     val createdAt: Long
 )
 
+/**
+ * Deuda propia ([direction] = OWE) o dinero que otros me deben ([direction] = OWED).
+ * El saldo baja con cada pago registrado; se puede ajustar editando la deuda.
+ */
+@Entity(tableName = "debts")
+data class DebtEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    /** CARD, LOAN o INFORMAL. */
+    val kind: String,
+    /** OWE (yo debo) u OWED (me deben). */
+    val direction: String,
+    val originalCents: Long,
+    val balanceCents: Long,
+    /** Tasa efectiva anual en %, ej. 28.5. */
+    val annualRatePct: Double,
+    /** Cuota mensual, o pago mínimo en tarjetas. 0 si no aplica. */
+    val monthlyPaymentCents: Long,
+    /** Día del mes del pago/vencimiento (1-31); 0 = sin fecha. */
+    val dueDay: Int,
+    val creditLimitCents: Long = 0,
+    /** Palabras que identifican los pagos de esta deuda en los mensajes capturados. */
+    val matchKeyword: String = "",
+    val notes: String = "",
+    val active: Boolean = true,
+    val createdAt: Long
+)
+
+@Entity(tableName = "debt_payments", indices = [Index("debtId")])
+data class DebtPaymentEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val debtId: Long,
+    val timestamp: Long,
+    val amountCents: Long,
+    /** MANUAL o AUTO (detectado en una transacción capturada). */
+    val source: String,
+    val transactionId: Long? = null,
+    val note: String = ""
+)
+
 @Entity(tableName = "health_events", indices = [Index("timestamp")])
 data class HealthEventEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

@@ -1,12 +1,16 @@
 package com.carlos.finanzas.capture
 
 import android.content.Context
+import androidx.room.withTransaction
 import com.carlos.finanzas.FinanzasApp
 import com.carlos.finanzas.data.AppDatabase
+import com.carlos.finanzas.data.DebtPaymentEntity
 import com.carlos.finanzas.data.HealthEventEntity
 import com.carlos.finanzas.data.TransactionEntity
 import com.carlos.finanzas.data.UnrecognizedMessageEntity
+import com.carlos.finanzas.debt.DebtMatcher
 import java.security.MessageDigest
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,7 +51,10 @@ object CaptureProcessor {
         return MessageParser(userTemplates + MessageParser.DEFAULT_TEMPLATES)
     }
 
-    /** @return true si se insertó; false si era duplicado. */
+    /**
+     * Guarda la transacción (con categoría) y, si es el pago de una deuda registrada, descuenta el saldo.
+     * @return true si se insertó; false si era duplicado.
+     */
     suspend fun saveTransaction(
         db: AppDatabase,
         parsed: ParsedTransaction,
@@ -61,19 +68,50 @@ object CaptureProcessor {
         val fingerprint = sha256("${parsed.amountCents}|${parsed.merchant.lowercase()}|$bucket")
         val key = MerchantNormalizer.key(parsed.merchant)
         val learned = if (MerchantNormalizer.isLearnable(key)) db.categoryRules().findByKey(key)?.category else null
+
+        val debts = db.debts().activeNow()
+        val debtId = DebtMatcher.find(
+            debts.map { DebtMatcher.Candidate(it.id, it.matchKeyword, owedByMe = it.direction == "OWE") },
+            parsed.merchant, text, parsed.amountCents
+        )
+        val debt = debts.firstOrNull { it.id == debtId }
+        val category = if (learned == null && debt?.direction == "OWE") {
+            Categories.DEBTS
+        } else {
+            Categorizer.suggest(key, parsed.amountCents, learned)
+        }
+
         val id = db.transactions().insert(
             TransactionEntity(
                 timestamp = timestamp,
                 amountCents = parsed.amountCents,
                 merchant = parsed.merchant,
-                category = Categorizer.suggest(key, parsed.amountCents, learned),
+                category = category,
                 source = source,
                 sender = sender,
                 rawText = text,
                 fingerprint = fingerprint
             )
         )
-        return id != -1L
+        if (id == -1L) return false
+
+        if (debt != null) {
+            val amount = abs(parsed.amountCents)
+            db.withTransaction {
+                db.debtPayments().insert(
+                    DebtPaymentEntity(
+                        debtId = debt.id,
+                        timestamp = timestamp,
+                        amountCents = amount,
+                        source = "AUTO",
+                        transactionId = id,
+                        note = parsed.merchant
+                    )
+                )
+                db.debts().applyPayment(debt.id, amount)
+            }
+        }
+        return true
     }
 
     fun logHealth(context: Context, type: String, detail: String? = null) {

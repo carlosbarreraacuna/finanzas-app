@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -23,6 +24,44 @@ interface TransactionDao {
 
     @Query("UPDATE transactions SET category = :category WHERE id IN (:ids)")
     suspend fun setCategoryForIds(ids: List<Long>, category: String)
+}
+
+@Dao
+interface DebtDao {
+    @Insert
+    suspend fun insert(debt: DebtEntity): Long
+
+    @Update
+    suspend fun update(debt: DebtEntity)
+
+    @Query("SELECT * FROM debts WHERE active = 1 ORDER BY name COLLATE NOCASE")
+    fun observeActive(): Flow<List<DebtEntity>>
+
+    @Query("SELECT * FROM debts WHERE active = 1")
+    suspend fun activeNow(): List<DebtEntity>
+
+    @Query("UPDATE debts SET active = 0 WHERE id = :id")
+    suspend fun archive(id: Long)
+
+    /** Resta el pago al saldo sin dejarlo bajo cero. */
+    @Query("UPDATE debts SET balanceCents = MAX(0, balanceCents - :amountCents) WHERE id = :id")
+    suspend fun applyPayment(id: Long, amountCents: Long)
+
+    /** Devuelve al saldo un pago borrado. */
+    @Query("UPDATE debts SET balanceCents = balanceCents + :amountCents WHERE id = :id")
+    suspend fun revertPayment(id: Long, amountCents: Long)
+}
+
+@Dao
+interface DebtPaymentDao {
+    @Insert
+    suspend fun insert(payment: DebtPaymentEntity): Long
+
+    @Query("SELECT * FROM debt_payments WHERE debtId = :debtId ORDER BY timestamp DESC LIMIT 50")
+    fun observeFor(debtId: Long): Flow<List<DebtPaymentEntity>>
+
+    @Query("DELETE FROM debt_payments WHERE id = :id")
+    suspend fun delete(id: Long)
 }
 
 @Dao
