@@ -34,21 +34,32 @@ jobs:
             echo "KEYSTORE_PASSWORD=$KS_PASS" >> "$GITHUB_ENV"
             echo "KEY_ALIAS=$KS_ALIAS" >> "$GITHUB_ENV"
             echo "KEY_PASSWORD=$KS_KEY_PASS" >> "$GITHUB_ENV"
+            echo "SIGNED_RELEASE=true" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sin secrets de firma: se compila un APK debug (instalable, pero su firma cambia en cada build y no permite actualizar encima). Agrega KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS y KEY_PASSWORD."
           fi
 
       - name: Pruebas unitarias
         run: gradle :app:testDebugUnitTest --no-daemon
 
-      - name: Compilar release
-        run: gradle :app:assembleRelease --no-daemon
+      # Un APK release sin firmar no se puede instalar ("el paquete no es válido"),
+      # así que sin secrets se genera el debug, que Android sí instala.
+      - name: Compilar APK
+        run: |
+          if [ "$SIGNED_RELEASE" = "true" ]; then
+            gradle :app:assembleRelease --no-daemon
+          else
+            gradle :app:assembleDebug --no-daemon
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
           name: finanzas-apk
-          path: app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/*/*.apk
+          if-no-files-found: error
 
-      - name: Publicar en Releases (solo tags)
+      - name: Publicar en Releases (solo tags firmados)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/*.apk
+          files: app/build/outputs/apk/*/*.apk
