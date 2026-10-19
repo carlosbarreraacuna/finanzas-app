@@ -3,6 +3,7 @@ package com.carlos.finanzas.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.carlos.finanzas.FinanzasApp
 import com.carlos.finanzas.capture.CaptureProcessor
 import com.carlos.finanzas.capture.MerchantNormalizer
@@ -25,6 +26,30 @@ class TransactionsViewModel(app: Application) : AndroidViewModel(app) {
     val transactions: StateFlow<List<TransactionEntity>> =
         db.transactions().recent(200)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Corrige monto, detalle y tipo (gasto/ingreso) de un movimiento. */
+    fun edit(tx: TransactionEntity, amountCents: Long, merchant: String, isIncome: Boolean) {
+        if (amountCents <= 0) return
+        viewModelScope.launch(Dispatchers.IO) {
+            val name = merchant.trim().ifEmpty { tx.merchant }
+            db.transactions().update(
+                tx.copy(amountCents = if (isIncome) amountCents else -amountCents, merchant = name)
+            )
+        }
+    }
+
+    /** Elimina un movimiento; si había descontado una deuda, devuelve ese monto al saldo. */
+    fun delete(tx: TransactionEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            db.withTransaction {
+                db.debtPayments().forTransaction(tx.id).forEach { p ->
+                    db.debtPayments().delete(p.id)
+                    db.debts().revertPayment(p.debtId, p.amountCents)
+                }
+                db.transactions().delete(tx.id)
+            }
+        }
+    }
 
     /** Registra a mano un movimiento que la app no capturó (efectivo, factura por correo, etc.). */
     fun addManual(amountCents: Long, merchant: String, isIncome: Boolean) {

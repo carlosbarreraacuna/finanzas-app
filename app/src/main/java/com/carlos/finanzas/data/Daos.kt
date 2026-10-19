@@ -22,6 +22,12 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE timestamp >= :fromMs AND timestamp < :toMs")
     fun between(fromMs: Long, toMs: Long): Flow<List<TransactionEntity>>
 
+    @Update
+    suspend fun update(tx: TransactionEntity)
+
+    @Query("DELETE FROM transactions WHERE id = :id")
+    suspend fun delete(id: Long)
+
     @Query("UPDATE transactions SET category = :category WHERE id IN (:ids)")
     suspend fun setCategoryForIds(ids: List<Long>, category: String)
 }
@@ -59,6 +65,9 @@ interface DebtPaymentDao {
 
     @Query("SELECT * FROM debt_payments WHERE debtId = :debtId ORDER BY timestamp DESC LIMIT 50")
     fun observeFor(debtId: Long): Flow<List<DebtPaymentEntity>>
+
+    @Query("SELECT * FROM debt_payments WHERE transactionId = :txId")
+    suspend fun forTransaction(txId: Long): List<DebtPaymentEntity>
 
     @Query("DELETE FROM debt_payments WHERE id = :id")
     suspend fun delete(id: Long)

@@ -11,6 +11,13 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -22,6 +29,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.sp
 import com.carlos.finanzas.capture.ListenerKeepAlive
 import com.carlos.finanzas.ui.BudgetScreen
 import com.carlos.finanzas.ui.BudgetViewModel
@@ -57,7 +65,8 @@ class MainActivity : ComponentActivity() {
                 launcher.launch(perms.toTypedArray())
             }
 
-            val tabs = listOf("Movimientos", "Presupuesto", "Deudas", "Sin reconocer", "Más")
+            val tabs = listOf("Movimientos", "Presupuesto", "Deudas", "Pendientes", "Más")
+            val icons = listOf(Icons.Default.List, Icons.Default.ShoppingCart, Icons.Default.DateRange, Icons.Default.Email, Icons.Default.Menu)
             var tab by remember { mutableIntStateOf(0) }
 
             FinanzasTheme {
@@ -69,8 +78,8 @@ class MainActivity : ComponentActivity() {
                                     NavigationBarItem(
                                         selected = tab == i,
                                         onClick = { tab = i },
-                                        icon = {},
-                                        label = { Text(label) }
+                                        icon = { Icon(icons[i], contentDescription = null) },
+                                        label = { Text(label, maxLines = 1, softWrap = false, fontSize = 11.sp) }
                                     )
                                 }
                             }

@@ -13,8 +13,8 @@ android {
         minSdk = 26
         targetSdk = 34
         // Sube versionCode en cada release para poder actualizar encima.
-        versionCode = 7
-        versionName = "0.4.3"
+        versionCode = 8
+        versionName = "0.4.4"
     }
 
     signingConfigs {
@@ -56,6 +56,7 @@ dependencies {
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.activity:activity-compose:1.9.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")

@@ -49,9 +49,39 @@ fun TransactionsScreen(viewModel: TransactionsViewModel) {
     val items by viewModel.transactions.collectAsState()
     var editing by remember { mutableStateOf<TransactionEntity?>(null) }
     var adding by remember { mutableStateOf(false) }
+    var changing by remember { mutableStateOf<TransactionEntity?>(null) }
+    var deleting by remember { mutableStateOf<TransactionEntity?>(null) }
+
+    changing?.let { tx ->
+        AddManualDialog(
+            title = "Editar movimiento",
+            initial = tx,
+            onSave = { cents, merchant, income ->
+                viewModel.edit(tx, cents, merchant, income)
+                changing = null
+            },
+            onDismiss = { changing = null }
+        )
+    }
+    deleting?.let { tx ->
+        AlertDialog(
+            onDismissRequest = { deleting = null },
+            title = { Text("Eliminar movimiento") },
+            text = { Text("Se borrará \"${tx.merchant}\" por ${formatMoney(tx.amountCents)}. Si descontó una deuda, el saldo se restituye.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.delete(tx)
+                    deleting = null
+                }) { Text("Eliminar") }
+            },
+            dismissButton = { TextButton(onClick = { deleting = null }) { Text("Cancelar") } }
+        )
+    }
 
     if (adding) {
         AddManualDialog(
+            title = "Agregar movimiento",
+            initial = null,
             onSave = { cents, merchant, income ->
                 viewModel.addManual(cents, merchant, income)
                 adding = false
@@ -67,6 +97,8 @@ fun TransactionsScreen(viewModel: TransactionsViewModel) {
                 viewModel.setCategory(tx, category, applyToMerchant)
                 editing = null
             },
+            onEdit = { editing = null; changing = tx },
+            onDelete = { editing = null; deleting = tx },
             onDismiss = { editing = null }
         )
     }
@@ -126,6 +158,8 @@ fun TransactionsScreen(viewModel: TransactionsViewModel) {
 private fun CategoryDialog(
     tx: TransactionEntity,
     onPick: (category: String, applyToMerchant: Boolean) -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
     onDismiss: () -> Unit
 ) {
     var applyToMerchant by remember(tx.id) { mutableStateOf(true) }
@@ -135,6 +169,10 @@ private fun CategoryDialog(
         title = { Text("Categoría de ${tx.merchant}") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
+                Row {
+                    TextButton(onClick = onEdit) { Text("Editar monto") }
+                    TextButton(onClick = onDelete) { Text("Eliminar") }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = applyToMerchant, onCheckedChange = { applyToMerchant = it })
                     Text("Recordar para este comercio y aplicar a los anteriores")
@@ -151,13 +189,18 @@ private fun CategoryDialog(
 }
 
 @Composable
-private fun AddManualDialog(onSave: (Long, String, Boolean) -> Unit, onDismiss: () -> Unit) {
-    var amount by remember { mutableStateOf("") }
-    var merchant by remember { mutableStateOf("") }
-    var income by remember { mutableStateOf(false) }
+private fun AddManualDialog(
+    title: String,
+    initial: TransactionEntity?,
+    onSave: (Long, String, Boolean) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var amount by remember { mutableStateOf(initial?.let { (kotlin.math.abs(it.amountCents) / 100).toString() } ?: "") }
+    var merchant by remember { mutableStateOf(initial?.merchant ?: "") }
+    var income by remember { mutableStateOf((initial?.amountCents ?: -1L) > 0) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Agregar movimiento") },
+        title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
