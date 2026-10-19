@@ -52,7 +52,7 @@ class TransactionsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Registra a mano un movimiento que la app no capturó (efectivo, factura por correo, etc.). */
-    fun addManual(amountCents: Long, merchant: String, isIncome: Boolean) {
+    fun addManual(amountCents: Long, merchant: String, isIncome: Boolean, category: String? = null) {
         if (amountCents <= 0) return
         viewModelScope.launch(Dispatchers.IO) {
             val now = System.currentTimeMillis()
@@ -65,13 +65,38 @@ class TransactionsViewModel(app: Application) : AndroidViewModel(app) {
                     timestamp = now,
                     amountCents = signed,
                     merchant = name,
-                    category = com.carlos.finanzas.capture.Categorizer.suggest(key, signed, learned),
+                    category = category ?: com.carlos.finanzas.capture.Categorizer.suggest(key, signed, learned),
                     source = "MANUAL",
                     sender = "manual",
                     rawText = "",
                     fingerprint = "manual|$now|$signed|$name|${System.nanoTime()}"
                 )
             )
+        }
+    }
+
+    /** Guarda en un paso monto, detalle, tipo y categoría (y, si se pide, la regla del comercio). */
+    fun saveEdit(
+        tx: TransactionEntity,
+        amountCents: Long,
+        merchant: String,
+        isIncome: Boolean,
+        category: String,
+        applyToMerchant: Boolean
+    ) {
+        if (amountCents <= 0) return
+        viewModelScope.launch(Dispatchers.IO) {
+            val name = merchant.trim().ifEmpty { tx.merchant }
+            val updated = tx.copy(amountCents = if (isIncome) amountCents else -amountCents, merchant = name, category = category)
+            db.transactions().update(updated)
+            val key = MerchantNormalizer.key(name)
+            if (applyToMerchant && MerchantNormalizer.isLearnable(key)) {
+                val ids = db.transactions().all().filter { MerchantNormalizer.key(it.merchant) == key }.map { it.id }
+                ids.chunked(500).forEach { db.transactions().setCategoryForIds(it, category) }
+                db.categoryRules().upsert(
+                    CategoryRuleEntity(merchantKey = key, category = category, createdAt = System.currentTimeMillis())
+                )
+            }
         }
     }
 
@@ -113,6 +138,11 @@ class InboxViewModel(app: Application) : AndroidViewModel(app) {
 
     fun discard(id: Long) {
         viewModelScope.launch(Dispatchers.IO) { db.unrecognized().setStatus(id, "DISCARDED") }
+    }
+
+    /** El usuario lo registró a mano: sale de la bandeja sin contar como descartado. */
+    fun resolve(id: Long) {
+        viewModelScope.launch(Dispatchers.IO) { db.unrecognized().setStatus(id, "RESOLVED") }
     }
 
     /** Vista previa: qué transacción saldría de aplicar [pattern] al [text]. */

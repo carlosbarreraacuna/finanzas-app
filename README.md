@@ -2,13 +2,14 @@
 
 App Android personal (local-first) que captura gastos desde notificaciones y SMS bancarios, sin depender de terceros.
 
-## Estado actual (v0.4.0)
+## Estado actual (v0.6.0)
 - Room (SQLite) v3: `transactions`, `unrecognized_messages`, `health_events`, `templates`, `category_rules` (migraciones 1→2 y 2→3).
 - `FinanceNotificationListener` y `SmsReceiver` -> `CaptureProcessor` -> `MessageParser` (plantillas regex).
   Las plantillas del usuario (tabla `templates`) tienen prioridad sobre las de ejemplo.
 - Deduplicación por huella (monto + comercio + ventana de 5 min).
 - Pantallas: **Movimientos**, **Sin reconocer** (asistente para crear plantillas seleccionando el monto y el comercio
   en el mensaje, vista previa y reprocesado de pendientes del mismo remitente), **Salud del servicio**, **Ajustes**.
+- **Rediseño** (v0.6.0): Inicio con la fecha en que quedas libre de deudas, edición de movimientos en un panel, simulador de abonos con barra, límites por categoría en Presupuesto y pestaña Más con Captura, Recurrentes, Por revisar y Respaldo. Fuente Instrument Sans (OFL, ver `licenses/`).
 - **Cargos recurrentes** (v0.5.0): detecta comercios que cobran semanal, quincenal o mensualmente (3 cobros o más), estima el costo mensual, la próxima fecha y marca cambios de precio. Está en Más → Recurrentes.
 - **Deudas** (v0.4.0): tarjetas, préstamos y deudas informales (yo debo / me deben), tabla de amortización con tasa EA,
   simulador de abonos extra, comparación avalancha vs bola de nieve, descuento automático de pagos detectados por palabra clave,

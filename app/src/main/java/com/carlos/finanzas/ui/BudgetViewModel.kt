@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 data class BudgetUiState(
     val limitCents: Long = 0,
     val payday: Int = 1,
+    val categoryLimits: Map<String, Long> = emptyMap(),
     val summary: BudgetCalculator.Summary? = null
 )
 
@@ -27,9 +28,9 @@ class BudgetViewModel(app: Application) : AndroidViewModel(app) {
     private val prefs = BudgetPrefs(app)
     private val transactions = (app as FinanzasApp).db.transactions()
 
-    private data class Config(val limitCents: Long, val payday: Int)
+    private data class Config(val limitCents: Long, val payday: Int, val categoryLimits: Map<String, Long>)
 
-    private val config = MutableStateFlow(Config(prefs.limitCents, prefs.payday))
+    private val config = MutableStateFlow(Config(prefs.limitCents, prefs.payday, prefs.categoryLimits))
 
     val state: StateFlow<BudgetUiState> = config.flatMapLatest { cfg ->
         val zone = ZoneId.systemDefault()
@@ -42,17 +43,20 @@ class BudgetViewModel(app: Application) : AndroidViewModel(app) {
             BudgetUiState(
                 limitCents = cfg.limitCents,
                 payday = cfg.payday,
+                categoryLimits = cfg.categoryLimits,
                 summary = BudgetCalculator.summarize(cfg.limitCents, spends, today, cfg.payday, zone)
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BudgetUiState())
 
     /** @param limitPesos presupuesto en pesos (sin decimales). */
-    fun save(limitPesos: Long, payday: Int) {
+    fun save(limitPesos: Long, payday: Int, categoryLimitsCents: Map<String, Long> = config.value.categoryLimits) {
         val limit = (limitPesos * 100).coerceAtLeast(0)
         val day = payday.coerceIn(1, 31)
+        val cats = categoryLimitsCents.filter { it.value > 0 }
         prefs.limitCents = limit
         prefs.payday = day
-        config.value = Config(limit, day)
+        prefs.categoryLimits = cats
+        config.value = Config(limit, day, cats)
     }
 }
