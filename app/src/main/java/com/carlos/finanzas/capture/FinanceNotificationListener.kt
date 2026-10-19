@@ -1,6 +1,8 @@
 package com.carlos.finanzas.capture
 
 import android.content.ComponentName
+import android.os.Handler
+import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 
@@ -10,6 +12,7 @@ class FinanceNotificationListener : NotificationListenerService() {
         super.onListenerConnected()
         connected = true
         CaptureProcessor.logHealth(this, "LISTENER_CONNECTED")
+        ListenerKeepAlive.clearAlert(this)
     }
 
     override fun onListenerDisconnected() {
@@ -19,6 +22,11 @@ class FinanceNotificationListener : NotificationListenerService() {
         // Pide al sistema que vuelva a enlazar el servicio.
         requestRebind(ComponentName(this, FinanceNotificationListener::class.java))
         CaptureProcessor.logHealth(this, "REBIND_REQUESTED")
+        // Si en 15 s no se reconectó solo, avisa al usuario.
+        val appContext = applicationContext
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (!connected) ListenerKeepAlive.notifyDown(appContext)
+        }, 15_000)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
