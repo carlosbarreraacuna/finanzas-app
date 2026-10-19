@@ -9,6 +9,7 @@ App Android personal (local-first) que captura gastos desde notificaciones y SMS
 - Deduplicación por huella (monto + comercio + ventana de 5 min).
 - Pantallas: **Movimientos**, **Sin reconocer** (asistente para crear plantillas seleccionando el monto y el comercio
   en el mensaje, vista previa y reprocesado de pendientes del mismo remitente), **Salud del servicio**, **Ajustes**.
+- **Cargos recurrentes** (v0.5.0): detecta comercios que cobran semanal, quincenal o mensualmente (3 cobros o más), estima el costo mensual, la próxima fecha y marca cambios de precio. Está en Más → Recurrentes.
 - **Deudas** (v0.4.0): tarjetas, préstamos y deudas informales (yo debo / me deben), tabla de amortización con tasa EA,
   simulador de abonos extra, comparación avalancha vs bola de nieve, descuento automático de pagos detectados por palabra clave,
   y avisos diarios de vencimientos (3 días antes) y cupo de tarjeta alto (>=80 %). Base de datos en esquema v4. Pestaña "Más" = Salud + Ajustes.
