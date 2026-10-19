@@ -55,7 +55,11 @@ class HealthViewModel(app: Application) : AndroidViewModel(app) {
     /** Pide al sistema volver a enlazar el listener de notificaciones. */
     fun requestRebind() {
         val ctx: Context = getApplication()
-        NotificationListenerService.requestRebind(ComponentName(ctx, FinanceNotificationListener::class.java))
+        val component = ComponentName(ctx, FinanceNotificationListener::class.java)
+        // Apagar y encender el componente fuerza al sistema a enlazar el listener de nuevo.
+        ctx.packageManager.setComponentEnabledSetting(component, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+        ctx.packageManager.setComponentEnabledSetting(component, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
+        NotificationListenerService.requestRebind(component)
         CaptureProcessor.logHealth(ctx, "REBIND_REQUESTED", "manual")
         refreshPermissions()
     }

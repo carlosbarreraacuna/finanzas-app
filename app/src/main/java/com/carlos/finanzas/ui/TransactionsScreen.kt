@@ -12,7 +12,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,7 +26,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.carlos.finanzas.capture.Categories
@@ -43,6 +48,17 @@ fun formatMoney(cents: Long): String = copFormat.format(cents / 100.0)
 fun TransactionsScreen(viewModel: TransactionsViewModel) {
     val items by viewModel.transactions.collectAsState()
     var editing by remember { mutableStateOf<TransactionEntity?>(null) }
+    var adding by remember { mutableStateOf(false) }
+
+    if (adding) {
+        AddManualDialog(
+            onSave = { cents, merchant, income ->
+                viewModel.addManual(cents, merchant, income)
+                adding = false
+            },
+            onDismiss = { adding = false }
+        )
+    }
 
     editing?.let { tx ->
         CategoryDialog(
@@ -63,6 +79,7 @@ fun TransactionsScreen(viewModel: TransactionsViewModel) {
                     "bancaria reconocida aparecerá aquí.",
                 Modifier.padding(top = 8.dp)
             )
+            Button(onClick = { adding = true }, modifier = Modifier.padding(top = 12.dp)) { Text("Agregar movimiento") }
         }
         return
     }
@@ -74,6 +91,7 @@ fun TransactionsScreen(viewModel: TransactionsViewModel) {
         item {
             Text("Movimientos", style = MaterialTheme.typography.headlineSmall)
             Text("Toca un movimiento para cambiar su categoría.", style = MaterialTheme.typography.bodySmall)
+            Button(onClick = { adding = true }, modifier = Modifier.padding(top = 8.dp)) { Text("Agregar movimiento") }
         }
         items(items, key = { it.id }) { tx ->
             Card(Modifier.fillMaxWidth().clickable { editing = tx }) {
@@ -129,5 +147,48 @@ private fun CategoryDialog(
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+    )
+}
+
+@Composable
+private fun AddManualDialog(onSave: (Long, String, Boolean) -> Unit, onDismiss: () -> Unit) {
+    var amount by remember { mutableStateOf("") }
+    var merchant by remember { mutableStateOf("") }
+    var income by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Agregar movimiento") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (!income) Button(onClick = { income = false }) { Text("Gasto") }
+                    else OutlinedButton(onClick = { income = false }) { Text("Gasto") }
+                    if (income) Button(onClick = { income = true }) { Text("Ingreso") }
+                    else OutlinedButton(onClick = { income = true }) { Text("Ingreso") }
+                }
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it.filter(Char::isDigit) },
+                    label = { Text("Monto (COP)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = merchant,
+                    onValueChange = { merchant = it },
+                    label = { Text("Comercio o detalle (ej. Farmatodo)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                enabled = (amount.toLongOrNull() ?: 0L) > 0,
+                onClick = { onSave((amount.toLongOrNull() ?: 0L) * 100, merchant, income) }
+            ) { Text("Guardar") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
     )
 }

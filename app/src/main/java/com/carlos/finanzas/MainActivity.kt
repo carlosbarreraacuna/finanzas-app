@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.carlos.finanzas.capture.ListenerKeepAlive
 import com.carlos.finanzas.ui.BudgetScreen
 import com.carlos.finanzas.ui.BudgetViewModel
 import com.carlos.finanzas.ui.DebtScreen
@@ -92,6 +93,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        ListenerKeepAlive.ensureBound(this, "resume")
         healthViewModel.refreshPermissions()
     }
 }

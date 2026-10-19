@@ -26,6 +26,30 @@ class TransactionsViewModel(app: Application) : AndroidViewModel(app) {
         db.transactions().recent(200)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** Registra a mano un movimiento que la app no capturó (efectivo, factura por correo, etc.). */
+    fun addManual(amountCents: Long, merchant: String, isIncome: Boolean) {
+        if (amountCents <= 0) return
+        viewModelScope.launch(Dispatchers.IO) {
+            val now = System.currentTimeMillis()
+            val signed = if (isIncome) amountCents else -amountCents
+            val name = merchant.trim().ifEmpty { if (isIncome) "Ingreso manual" else "Gasto manual" }
+            val key = MerchantNormalizer.key(name)
+            val learned = if (MerchantNormalizer.isLearnable(key)) db.categoryRules().findByKey(key)?.category else null
+            db.transactions().insert(
+                TransactionEntity(
+                    timestamp = now,
+                    amountCents = signed,
+                    merchant = name,
+                    category = com.carlos.finanzas.capture.Categorizer.suggest(key, signed, learned),
+                    source = "MANUAL",
+                    sender = "manual",
+                    rawText = "",
+                    fingerprint = "manual|$now|$signed|$name|${System.nanoTime()}"
+                )
+            )
+        }
+    }
+
     /**
      * Asigna la categoría a una transacción. Con [applyToMerchant] además crea (o actualiza) la regla
      * del comercio y recategoriza todas las transacciones existentes del mismo comercio.
